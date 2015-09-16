@@ -9,8 +9,12 @@
 #include <sys/sysctl.h>
 
 #import <CommonCrypto/CommonDigest.h>
+
+#if !defined(TARGET_OS_WATCH)
 #import <CoreTelephony/CTCarrier.h>
 #import <CoreTelephony/CTTelephonyNetworkInfo.h>
+#endif
+
 #import <SystemConfiguration/SystemConfiguration.h>
 #import <UIKit/UIDevice.h>
 
@@ -61,7 +65,9 @@
 @property (nonatomic, assign) UIBackgroundTaskIdentifier taskId;
 @property (nonatomic, strong) dispatch_queue_t serialQueue;
 @property (nonatomic, assign) SCNetworkReachabilityRef reachability;
+#if !defined(TARGET_OS_WATCH)
 @property (nonatomic, strong) CTTelephonyNetworkInfo *telephonyInfo;
+#endif
 @property (nonatomic, strong) NSDateFormatter *dateFormatter;
 @property (nonatomic, strong) NSMutableDictionary *timedEvents;
 
@@ -158,7 +164,9 @@ static Mixpanel *sharedInstance = nil;
 
         self.distinctId = [self defaultDistinctId];
         self.superProperties = [NSMutableDictionary dictionary];
+#if !defined(TARGET_OS_WATCH)
         self.telephonyInfo = [[CTTelephonyNetworkInfo alloc] init];
+#endif
         self.automaticProperties = [self collectAutomaticProperties];
         self.eventsQueue = [NSMutableArray array];
         self.peopleQueue = [NSMutableArray array];
@@ -914,7 +922,7 @@ static __unused NSString *MPURLEncode(NSString *s)
     return ifa;
 }
 
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 70000
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 70000 && !defined(TARGET_OS_WATCH)
 - (void)setCurrentRadio
 {
     dispatch_async(self.serialQueue, ^(){
@@ -947,13 +955,16 @@ static __unused NSString *MPURLEncode(NSString *s)
     UIDevice *device = [UIDevice currentDevice];
     NSString *deviceModel = [self deviceModel];
     CGSize size = [UIScreen mainScreen].bounds.size;
+#if !defined(TARGET_OS_WATCH)
     CTCarrier *carrier = [self.telephonyInfo subscriberCellularProvider];
-
+#endif
     // Use setValue semantics to avoid adding keys where value can be nil.
     [p setValue:[[NSBundle mainBundle] infoDictionary][@"CFBundleVersion"] forKey:@"$app_version"];
     [p setValue:[[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"] forKey:@"$app_release"];
     [p setValue:[self IFA] forKey:@"$ios_ifa"];
+#if !defined(TARGET_OS_WATCH)
     [p setValue:carrier.carrierName forKey:@"$carrier"];
+#endif
     [p setValue:[self watchModel] forKey:@"$watch_model"];
 
     [p addEntriesFromDictionary:@{
@@ -1015,7 +1026,7 @@ static __unused NSString *MPURLEncode(NSString *s)
     NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
 
     // cellular info
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 70000
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 70000 && !defined(TARGET_OS_WATCH)
     if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_6_1) {
         [self setCurrentRadio];
         [notificationCenter addObserver:self
