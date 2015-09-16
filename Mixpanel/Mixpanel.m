@@ -13,9 +13,9 @@
 #if !defined(TARGET_OS_WATCH)
 #import <CoreTelephony/CTCarrier.h>
 #import <CoreTelephony/CTTelephonyNetworkInfo.h>
+#import <SystemConfiguration/SystemConfiguration.h>
 #endif
 
-#import <SystemConfiguration/SystemConfiguration.h>
 #import <UIKit/UIDevice.h>
 
 #import "Mixpanel.h"
